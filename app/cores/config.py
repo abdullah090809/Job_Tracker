@@ -1,7 +1,9 @@
 from pydantic_settings import BaseSettings
 from pathlib import Path
+import os
 
-env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+ENV_FILE = os.getenv("ENV_FILE", ".env")
+env_path = Path(__file__).resolve().parent.parent.parent / ENV_FILE
 
 class Settings(BaseSettings):
     DATABASE_HOSTNAME: str

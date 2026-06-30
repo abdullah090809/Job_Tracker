@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pathway — Job Application Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #15120F;
+    --surface: #1D1813;
+    --surface-raised: #251F18;
+    --border: #332B22;
+    --accent: #D98E3B;
+    --accent-soft: rgba(217,142,59,0.14);
+    --text: #F3EDE2;
+    --text-muted: #A89A87;
+    --text-faint: #6E6256;
+    --applied: #7A93B0;
+    --interview: #D9B23A;
+    --offer: #6FA988;
+    --rejected: #B5563C;
+    --radius: 10px;
+    --shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html,body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    z-index:0;
+    opacity:0.5;
+    background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+  @keyframes fadeUp{
+    from{ opacity:0; transform: translateY(10px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  @keyframes fadeIn{
+    from{ opacity:0; }
+    to{ opacity:1; }
+  }
+  @keyframes scaleIn{
+    from{ opacity:0; transform: scale(0.96) translateY(6px); }
+    to{ opacity:1; transform: scale(1) translateY(0); }
+  }
+  @keyframes drawLine{
+    from{ transform: scaleX(0); }
+    to{ transform: scaleX(1); }
+  }
+  @keyframes glowPulse{
+    0%,100%{ box-shadow: 0 0 0 4px var(--accent-soft); }
+    50%{ box-shadow: 0 0 0 7px rgba(217,142,59,0.06); }
+  }
+  @keyframes driftA{
+    0%,100%{ transform: translate(0,0); }
+    50%{ transform: translate(24px,-18px); }
+  }
+  @keyframes driftB{
+    0%,100%{ transform: translate(0,0); }
+    50%{ transform: translate(-20px,16px); }
+  }
+  h1,h2,h3,.display{
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  a{color:inherit;}
+  button{font-family:inherit;}
+  ::selection{background: var(--accent-soft);}
+
+  /* ---------- Layout shells ---------- */
+  #app{min-height:100vh;}
+  .hidden{display:none !important;}
+
+  /* ---------- Auth screen ---------- */
+  .auth-shell{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    position:relative;
+    overflow:hidden;
+  }
+  .auth-shell::before{
+    content:"";
+    position:absolute;
+    top:-20%; right:-10%;
+    width:520px; height:520px;
+    background: radial-gradient(circle, rgba(217,142,59,0.10), transparent 70%);
+    pointer-events:none;
+    animation: driftA 14s ease-in-out infinite;
+  }
+  .auth-shell::after{
+    content:"";
+    position:absolute;
+    bottom:-25%; left:-12%;
+    width:460px; height:460px;
+    background: radial-gradient(circle, rgba(111,169,136,0.08), transparent 70%);
+    pointer-events:none;
+    animation: driftB 17s ease-in-out infinite;
+  }
+  .auth-card{
+    width:100%;
+    max-width:400px;
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:36px 32px;
+    box-shadow: var(--shadow);
+    position:relative;
+    z-index:1;
+    animation: scaleIn .45s cubic-bezier(.16,1,.3,1);
+  }
+  .auth-mark{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom: 28px;
+  }
+  .auth-mark .dot{
+    width:9px; height:9px; border-radius:50%;
+    background: var(--accent);
+    animation: glowPulse 2.6s ease-in-out infinite;
+  }
+  .auth-mark span{
+    font-size:13px; letter-spacing:0.14em; text-transform:uppercase; color: var(--text-muted);
+  }
+  .auth-card h1{
+    font-size: 28px;
+    margin: 0 0 6px 0;
+  }
+  .auth-card p.sub{
+    color: var(--text-muted);
+    font-size: 14px;
+    margin: 0 0 26px 0;
+    line-height:1.5;
+  }
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:12px;
+    color: var(--text-muted);
+    margin-bottom:6px;
+    letter-spacing:0.02em;
+  }
+  .field input, .field select, .field textarea{
+    width:100%;
+    background: var(--surface-raised);
+    border:1px solid var(--border);
+    color: var(--text);
+    border-radius:8px;
+    padding:11px 13px;
+    font-size:14px;
+    font-family:inherit;
+    outline:none;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .12s ease;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .field textarea{resize:vertical; min-height:90px; line-height:1.5;}
+  .btn{
+    appearance:none;
+    border:none;
+    border-radius:8px;
+    padding:11px 18px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition: transform .12s cubic-bezier(.34,1.56,.64,1), opacity .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+    position:relative;
+  }
+  .btn:hover{ transform: translateY(-1px); }
+  .btn:active{transform: scale(0.97) translateY(0);}
+  .btn-primary{
+    background: var(--accent);
+    color: #18130C;
+    width:100%;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+  }
+  .btn-primary:hover{opacity:0.94; box-shadow: 0 4px 14px rgba(217,142,59,0.22);}
+  .btn-ghost{
+    background:transparent;
+    color: var(--text-muted);
+    border:1px solid var(--border);
+  }
+  .btn-ghost:hover{ color: var(--text); border-color: var(--text-faint);}
+  .btn-danger{
+    background: rgba(181,86,60,0.14);
+    color: var(--rejected);
+    border:1px solid rgba(181,86,60,0.3);
+  }
+  .btn-danger:hover{background: rgba(181,86,60,0.22);}
+  .btn-small{ padding:7px 12px; font-size:12.5px; }
+  .auth-switch{
+    margin-top:20px;
+    font-size:13px;
+    color: var(--text-muted);
+    text-align:center;
+  }
+  .auth-switch button{
+    background:none; border:none; color: var(--accent);
+    cursor:pointer; font-size:13px; font-weight:600; padding:0;
+  }
+  .form-error{
+    background: rgba(181,86,60,0.12);
+    border:1px solid rgba(181,86,60,0.3);
+    color:#E2A292;
+    font-size:13px;
+    padding:10px 12px;
+    border-radius:8px;
+    margin-bottom:16px;
+    line-height:1.4;
+  }
+  .form-ok{
+    background: rgba(111,169,136,0.12);
+    border:1px solid rgba(111,169,136,0.3);
+    color:#A9D2BC;
+    font-size:13px;
+    padding:10px 12px;
+    border-radius:8px;
+    margin-bottom:16px;
+    line-height:1.4;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 32px;
+    border-bottom:1px solid var(--border);
+    position:sticky; top:0;
+    background: rgba(21,18,15,0.88);
+    backdrop-filter: blur(8px);
+    z-index:20;
+    animation: fadeUp .4s ease;
+  }
+  .topbar .mark{display:flex; align-items:center; gap:10px;}
+  .topbar .mark .dot{
+    width:9px; height:9px; border-radius:50%;
+    background: var(--accent);
+    animation: glowPulse 2.6s ease-in-out infinite;
+  }
+  .topbar .mark span{font-size:13px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted);}
+  .topbar-right{display:flex; align-items:center; gap:10px;}
+  .user-pill{
+    font-size:13px; color: var(--text-muted);
+    padding:7px 12px; border:1px solid var(--border); border-radius:20px;
+  }
+
+  .container{ max-width:1180px; margin:0 auto; padding:32px; }
+
+  /* ---------- Trail / pipeline strip (signature element) ---------- */
+  .trail{
+    display:flex;
+    align-items:stretch;
+    gap:0;
+    margin-bottom:36px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+    background: var(--surface);
+    animation: fadeUp .5s ease .05s both;
+  }
+  .trail-stop{
+    flex:1;
+    padding:20px 22px;
+    position:relative;
+    border-right:1px solid var(--border);
+    transition: background .2s ease;
+  }
+  .trail-stop:hover{ background: rgba(255,255,255,0.015); }
+  .trail-stop:last-child{border-right:none;}
+  .trail-stop::after{
+    content:"";
+    position:absolute;
+    bottom:0; left:0; right:0;
+    height:3px;
+    background: var(--stop-color, var(--accent));
+    opacity:0.85;
+    transform-origin: left;
+    animation: drawLine .7s cubic-bezier(.16,1,.3,1) .15s both;
+  }
+  .trail-stop .count{
+    font-family:'Fraunces', serif;
+    font-size:32px;
+    font-weight:500;
+    line-height:1;
+    margin-bottom:6px;
+  }
+  .trail-stop .label{
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:22px;
+    gap:16px;
+    flex-wrap:wrap;
+    animation: fadeUp .5s ease .1s both;
+  }
+  .toolbar h2{font-size:21px; margin:0;}
+  .toolbar-actions{display:flex; gap:10px; align-items:center;}
+
+  /* ---------- Board ---------- */
+  .board{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:18px;
+  }
+  @media (max-width: 980px){ .board{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width: 600px){ .board{grid-template-columns:1fr;} }
+
+  .col{
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px;
+    min-height:140px;
+    animation: fadeUp .5s ease both;
+  }
+  .col:nth-child(1){ animation-delay: .08s; }
+  .col:nth-child(2){ animation-delay: .14s; }
+  .col:nth-child(3){ animation-delay: .20s; }
+  .col:nth-child(4){ animation-delay: .26s; }
+  .col-head{
+    display:flex; align-items:center; gap:8px;
+    margin-bottom:14px;
+    padding:0 2px;
+  }
+  .col-head .swatch{ width:8px; height:8px; border-radius:50%; }
+  .col-head .name{ font-size:12.5px; letter-spacing:0.06em; text-transform:uppercase; color: var(--text-muted); }
+  .col-head .num{ margin-left:auto; font-size:12px; color: var(--text-faint); }
+
+  .card{
+    background: var(--surface-raised);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:10px;
+    cursor:pointer;
+    transition: border-color .18s ease, transform .18s cubic-bezier(.16,1,.3,1), box-shadow .18s ease;
+    animation: fadeUp .35s ease both;
+  }
+  .card:hover{ border-color: var(--text-faint); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.28); }
+  .card:active{ transform: translateY(0) scale(0.99); }
+  .card .role{ font-size:14.5px; font-weight:600; margin-bottom:3px; }
+  .card .company{ font-size:13px; color: var(--text-muted); margin-bottom:10px; }
+  .card .meta{ display:flex; align-items:center; justify-content:space-between; }
+  .card .date{ font-size:11.5px; color: var(--text-faint); }
+  .card .jd-flag{ font-size:11px; color: var(--accent); }
+
+  .empty-col{
+    font-size:12.5px; color: var(--text-faint);
+    padding:16px 4px; text-align:center; line-height:1.5;
+  }
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed; inset:0;
+    background: rgba(10,8,6,0.6);
+    backdrop-filter: blur(2px);
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:48px 20px;
+    overflow-y:auto;
+    z-index:50;
+    animation: fadeIn .2s ease;
+  }
+  .modal{
+    width:100%; max-width:560px;
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow: var(--shadow);
+    padding:28px;
+    animation: scaleIn .28s cubic-bezier(.16,1,.3,1);
+  }
+  .modal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:20px;
+  }
+  .modal-head h3{ font-size:19px; margin:0; }
+  .modal-close{
+    background:none; border:none; color: var(--text-muted);
+    font-size:20px; cursor:pointer; line-height:1; padding:4px;
+  }
+  .modal-close:hover{ color: var(--text); }
+  .modal-actions{
+    display:flex; gap:10px; margin-top:22px;
+    justify-content:flex-end;
+  }
+  .row-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11.5px; letter-spacing:0.04em; text-transform:uppercase;
+    padding:4px 9px; border-radius:20px;
+    border:1px solid var(--border);
+  }
+  .badge .dot{ width:6px; height:6px; border-radius:50%; }
+
+  /* ---------- Analysis result ---------- */
+  .score-ring{
+    width:84px; height:84px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-size:24px;
+    flex-shrink:0;
+    border: 6px solid var(--surface-raised);
+  }
+  .analysis-head{ display:flex; align-items:center; gap:18px; margin-bottom:18px;}
+  .analysis-head .summary{ font-size:13.5px; color: var(--text-muted); line-height:1.55; }
+  .skill-group{ margin-bottom:16px; }
+  .skill-group h4{
+    font-size:11.5px; letter-spacing:0.08em; text-transform:uppercase;
+    color: var(--text-faint); margin:0 0 8px 0; font-weight:600;
+  }
+  .skill-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip{
+    font-size:12px; padding:5px 10px; border-radius:20px;
+    background: var(--surface-raised); border:1px solid var(--border);
+  }
+  .chip.match{ color:#A9D2BC; border-color: rgba(111,169,136,0.3); }
+  .chip.gap{ color:#E2A292; border-color: rgba(181,86,60,0.3); }
+  .tailored-block{
+    background: var(--surface-raised);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px;
+    margin-top:6px;
+  }
+  .tailored-block p{ font-size:13.5px; line-height:1.6; color: var(--text); margin:0 0 12px 0; }
+  .tailored-block ul{ margin:0; padding-left:18px; }
+  .tailored-block li{ font-size:13px; line-height:1.6; color: var(--text-muted); margin-bottom:4px; }
+
+  .spinner{
+    width:16px; height:16px;
+    border:2px solid rgba(255,255,255,0.25);
+    border-top-color: #18130C;
+    border-radius:50%;
+    animation: spin .7s linear infinite;
+    display:inline-block;
+    vertical-align:middle;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  .resume-box{
+    border:1px dashed var(--border);
+    border-radius:10px;
+    padding:16px;
+    font-size:13px;
+    color: var(--text-muted);
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .toast-stack{
+    position:fixed; bottom:24px; right:24px;
+    display:flex; flex-direction:column; gap:10px;
+    z-index:100;
+  }
+  .toast{
+    background: var(--surface-raised);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:13px;
+    box-shadow: var(--shadow);
+    max-width:320px;
+    animation: toastIn .2s ease;
+  }
+  .toast.err{ border-color: rgba(181,86,60,0.4); color:#E2A292; }
+  .toast.ok{ border-color: rgba(111,169,136,0.4); color:#A9D2BC; }
+  @keyframes toastIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes toastOut{ from{opacity:1; transform:translateY(0);} to{opacity:0; transform:translateY(6px);} }
+  .toast.leaving{ animation: toastOut .18s ease forwards; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+/* ============================================================
+   Pathway — Job Application Tracker frontend
+   Vanilla JS, talks to the FastAPI backend via fetch.
+   ============================================================ */
+
+const STATUS_META = {
+  applied:   { label: "Applied",   color: "var(--applied)" },
+  interview: { label: "Interview", color: "var(--interview)" },
+  offer:     { label: "Offer",     color: "var(--offer)" },
+  rejected:  { label: "Rejected",  color: "var(--rejected)" },
+};
+const STATUS_ORDER = ["applied", "interview", "offer", "rejected"];
+
+// Set this to your deployed API URL when you ship to HF Spaces / Supabase.
+const API_BASE = "http://127.0.0.1:8000";
+
+const state = {
+  apiBase: API_BASE,
+  token: localStorage.getItem("pathway_token") || null,
+  applications: [],
+  view: "login", // login | register | dashboard
+};
+
+const root = document.getElementById("app");
+
+/* ---------------- API helper ---------------- */
+async function api(path, { method = "GET", body, auth = true, isForm = false } = {}) {
+  const headers = {};
+  if (!isForm) headers["Content-Type"] = "application/json";
+  if (auth && state.token) headers["Authorization"] = "Bearer " + state.token;
+
+  const res = await fetch(state.apiBase + path, {
+    method,
+    headers,
+    body: isForm ? body : body ? JSON.stringify(body) : undefined,
+  });
+
+  let data = null;
+  try { data = await res.json(); } catch (e) { /* no body */ }
+
+  if (!res.ok) {
+    const detail = data && data.detail ? data.detail : `Request failed (${res.status})`;
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return data;
+}
+
+async function apiLogin(email, password) {
+  const form = new URLSearchParams();
+  form.append("username", email);
+  form.append("password", password);
+  const res = await fetch(state.apiBase + "/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: form.toString(),
+  });
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) throw new Error((data && data.detail) || "Login failed");
+  return data;
+}
+
+/* ---------------- Toasts ---------------- */
+function toast(msg, kind = "ok") {
+  const stack = document.getElementById("toastStack");
+  const el = document.createElement("div");
+  el.className = "toast " + (kind === "err" ? "err" : "ok");
+  el.textContent = msg;
+  stack.appendChild(el);
+  setTimeout(() => {
+    el.classList.add("leaving");
+    setTimeout(() => el.remove(), 200);
+  }, 4000);
+}
+
+/* ---------------- Render router ---------------- */
+function render() {
+  if (state.view === "dashboard" && state.token) {
+    renderDashboard();
+  } else if (state.view === "register") {
+    renderAuth("register");
+  } else {
+    renderAuth("login");
+  }
+}
+
+/* ---------------- Auth screens ---------------- */
+function renderAuth(mode) {
+  root.innerHTML = `
+    <div class="auth-shell">
+      <div class="auth-card">
+        <div class="auth-mark"><div class="dot"></div><span>Pathway</span></div>
+        <h1>${mode === "login" ? "Welcome back" : "Start your trail"}</h1>
+        <p class="sub">${mode === "login"
+          ? "Sign in to keep tracking where every application stands."
+          : "Create an account to start tracking applications and matching your resume to roles."}</p>
+        <div id="authMsg"></div>
+        <form id="authForm">
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="authEmail" required placeholder="you@example.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="authPassword" required placeholder="••••••••" autocomplete="${mode === "login" ? "current-password" : "new-password"}">
+          </div>
+          <button class="btn btn-primary" type="submit" id="authSubmit">${mode === "login" ? "Sign in" : "Create account"}</button>
+        </form>
+        <div class="auth-switch">
+          ${mode === "login"
+            ? `New here? <button id="switchToRegister">Create an account</button>`
+            : `Already have an account? <button id="switchToLogin">Sign in</button>`}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const switchBtn = document.getElementById(mode === "login" ? "switchToRegister" : "switchToLogin");
+  switchBtn.addEventListener("click", () => {
+    state.view = mode === "login" ? "register" : "login";
+    render();
+  });
+
+  document.getElementById("authForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+    const msgEl = document.getElementById("authMsg");
+    const submitBtn = document.getElementById("authSubmit");
+    msgEl.innerHTML = "";
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span class="spinner"></span>`;
+
+    try {
+      if (mode === "register") {
+        await api("/users", { method: "POST", body: { email, password }, auth: false });
+        const tokenData = await apiLogin(email, password);
+        state.token = tokenData.access_token;
+        localStorage.setItem("pathway_token", state.token);
+        toast("Account created. Welcome to Pathway.");
+        await loadApplications();
+        state.view = "dashboard";
+        render();
+      } else {
+        const tokenData = await apiLogin(email, password);
+        state.token = tokenData.access_token;
+        localStorage.setItem("pathway_token", state.token);
+        await loadApplications();
+        state.view = "dashboard";
+        render();
+      }
+    } catch (err) {
+      msgEl.innerHTML = `<div class="form-error">${escapeHtml(err.message)}</div>`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = mode === "login" ? "Sign in" : "Create account";
+    }
+  });
+}
+
+/* ---------------- Dashboard ---------------- */
+async function loadApplications() {
+  state.applications = await api("/applications");
+}
+
+function renderDashboard() {
+  const counts = { applied: 0, interview: 0, offer: 0, rejected: 0 };
+  state.applications.forEach(a => { counts[a.status] = (counts[a.status] || 0) + 1; });
+
+  root.innerHTML = `
+    <div class="topbar">
+      <div class="mark"><div class="dot"></div><span>Pathway</span></div>
+      <div class="topbar-right">
+        <button class="btn btn-ghost btn-small" id="resumeBtn">Resume</button>
+        <button class="btn btn-ghost btn-small" id="passwordBtn">Password</button>
+        <button class="btn btn-ghost btn-small" id="logoutBtn">Sign out</button>
+      </div>
+    </div>
+    <div class="container">
+      <div class="trail">
+        ${STATUS_ORDER.map(s => `
+          <div class="trail-stop" style="--stop-color:${STATUS_META[s].color}">
+            <div class="count" data-target="${counts[s] || 0}">0</div>
+            <div class="label">${STATUS_META[s].label}</div>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="toolbar">
+        <h2>Your applications</h2>
+        <div class="toolbar-actions">
+          <button class="btn btn-primary btn-small" id="newAppBtn">+ New application</button>
+        </div>
+      </div>
+
+      <div class="board">
+        ${STATUS_ORDER.map(s => renderColumn(s)).join("")}
+      </div>
+    </div>
+  `;
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    state.token = null;
+    localStorage.removeItem("pathway_token");
+    state.view = "login";
+    render();
+  });
+  document.getElementById("newAppBtn").addEventListener("click", () => openApplicationModal());
+  document.getElementById("resumeBtn").addEventListener("click", () => openResumeModal());
+  document.getElementById("passwordBtn").addEventListener("click", () => openPasswordModal());
+
+  document.querySelectorAll(".trail-stop .count").forEach(el => animateCount(el));
+
+  state.applications.forEach(a => {
+    const el = document.getElementById("card-" + a.id);
+    if (el) el.addEventListener("click", () => openApplicationModal(a));
+  });
+}
+
+function renderColumn(statusKey) {
+  const meta = STATUS_META[statusKey];
+  const items = state.applications.filter(a => a.status === statusKey);
+  return `
+    <div class="col">
+      <div class="col-head">
+        <div class="swatch" style="background:${meta.color}"></div>
+        <div class="name">${meta.label}</div>
+        <div class="num">${items.length}</div>
+      </div>
+      ${items.length === 0
+        ? `<div class="empty-col">No applications here yet.</div>`
+        : items.map((a, i) => `
+          <div class="card" id="card-${a.id}" style="animation-delay:${0.32 + i * 0.05}s">
+            <div class="role">${escapeHtml(a.role)}</div>
+            <div class="company">${escapeHtml(a.company)}</div>
+            <div class="meta">
+              <span class="date">${formatDate(a.applied_date)}</span>
+              ${a.jd_text ? `<span class="jd-flag">JD attached</span>` : ""}
+            </div>
+          </div>
+        `).join("")}
+    </div>
+  `;
+}
+
+/* ---------------- Application modal (create / edit / analyze) ---------------- */
+function openApplicationModal(app = null) {
+  const isEdit = !!app;
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-head">
+        <h3>${isEdit ? "Edit application" : "New application"}</h3>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div id="modalMsg"></div>
+      <form id="appForm">
+        <div class="row-2">
+          <div class="field">
+            <label>Company</label>
+            <input id="f_company" required value="${isEdit ? escapeAttr(app.company) : ""}">
+          </div>
+          <div class="field">
+            <label>Role</label>
+            <input id="f_role" required value="${isEdit ? escapeAttr(app.role) : ""}">
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label>Status</label>
+            <select id="f_status">
+              ${STATUS_ORDER.map(s => `<option value="${s}" ${isEdit && app.status === s ? "selected" : ""}>${STATUS_META[s].label}</option>`).join("")}
+            </select>
+          </div>
+          <div class="field">
+            <label>Applied date</label>
+            <input type="date" id="f_date" required value="${isEdit ? app.applied_date : new Date().toISOString().slice(0,10)}">
+          </div>
+        </div>
+        <div class="field">
+          <label>Job description</label>
+          <textarea id="f_jd" placeholder="Paste the job description here to enable AI matching...">${isEdit && app.jd_text ? escapeHtml(app.jd_text) : ""}</textarea>
+        </div>
+        <div class="field">
+          <label>Notes</label>
+          <textarea id="f_notes" placeholder="Referral, interview prep, contacts...">${isEdit && app.notes ? escapeHtml(app.notes) : ""}</textarea>
+        </div>
+        <div class="modal-actions">
+          ${isEdit ? `<button type="button" class="btn btn-danger btn-small" id="deleteBtn">Delete</button>` : ""}
+          ${isEdit ? `<button type="button" class="btn btn-ghost btn-small" id="analyzeBtn">Analyze match</button>` : ""}
+          <button type="button" class="btn btn-ghost btn-small" id="cancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-small" id="saveBtn">${isEdit ? "Save changes" : "Add application"}</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  document.getElementById("closeModal").addEventListener("click", close);
+  document.getElementById("cancelBtn").addEventListener("click", close);
+
+  if (isEdit) {
+    document.getElementById("deleteBtn").addEventListener("click", async () => {
+      if (!confirm(`Delete the application for ${app.role} at ${app.company}?`)) return;
+      try {
+        await api(`/applications/${app.id}`, { method: "DELETE" });
+        toast("Application deleted.");
+        close();
+        await loadApplications();
+        render();
+      } catch (err) {
+        toast(err.message, "err");
+      }
+    });
+    document.getElementById("analyzeBtn").addEventListener("click", () => {
+      close();
+      openAnalysisModal(app);
+    });
+  }
+
+  document.getElementById("appForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msgEl = document.getElementById("modalMsg");
+    const saveBtn = document.getElementById("saveBtn");
+    msgEl.innerHTML = "";
+    const payload = {
+      company: document.getElementById("f_company").value.trim(),
+      role: document.getElementById("f_role").value.trim(),
+      status: document.getElementById("f_status").value,
+      applied_date: document.getElementById("f_date").value,
+      jd_text: document.getElementById("f_jd").value.trim() || null,
+      notes: document.getElementById("f_notes").value.trim() || null,
+    };
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = `<span class="spinner"></span>`;
+    try {
+      if (isEdit) {
+        await api(`/applications/${app.id}`, { method: "PUT", body: payload });
+        toast("Application updated.");
+      } else {
+        await api("/applications", { method: "POST", body: payload });
+        toast("Application added.");
+      }
+      close();
+      await loadApplications();
+      render();
+    } catch (err) {
+      msgEl.innerHTML = `<div class="form-error">${escapeHtml(err.message)}</div>`;
+      saveBtn.disabled = false;
+      saveBtn.textContent = isEdit ? "Save changes" : "Add application";
+    }
+  });
+}
+
+/* ---------------- Analysis modal ---------------- */
+function openAnalysisModal(app) {
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Match analysis</h3>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div id="analysisBody">
+        <div style="display:flex; align-items:center; gap:10px; color:var(--text-muted); font-size:13.5px; padding: 20px 0;">
+          <span class="spinner" style="border-top-color: var(--accent);"></span>
+          Comparing your resume against this job description...
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  document.getElementById("closeModal").addEventListener("click", close);
+
+  runAnalysis(app, overlay);
+}
+
+async function runAnalysis(app, overlay) {
+  const body = overlay.querySelector("#analysisBody");
+  try {
+    const result = await api(`/applications/${app.id}/analyze`, { method: "POST" });
+    const score = result.match_score ?? 0;
+    const ringColor = score >= 70 ? "var(--offer)" : score >= 40 ? "var(--interview)" : "var(--rejected)";
+    const tailored = result.tailored_resume || {};
+
+    body.innerHTML = `
+      <div class="analysis-head">
+        <div class="score-ring" style="border-color:${ringColor}; color:${ringColor}">${score}%</div>
+        <div class="summary">${escapeHtml(result.summary || "")}</div>
+      </div>
+
+      <div class="skill-group">
+        <h4>Matching skills</h4>
+        <div class="skill-chips">
+          ${(result.matching_skills || []).map(s => `<span class="chip match">${escapeHtml(s)}</span>`).join("") || `<span style="color:var(--text-faint); font-size:12.5px;">None detected</span>`}
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <h4>Missing skills</h4>
+        <div class="skill-chips">
+          ${(result.missing_skills || []).map(s => `<span class="chip gap">${escapeHtml(s)}</span>`).join("") || `<span style="color:var(--text-faint); font-size:12.5px;">None detected</span>`}
+        </div>
+      </div>
+
+      ${tailored.professional_summary || (tailored.skills && tailored.skills.length) || (tailored.experience_bullets && tailored.experience_bullets.length) ? `
+      <div class="skill-group">
+        <h4>Tailored resume suggestions</h4>
+        <div class="tailored-block">
+          ${tailored.professional_summary ? `<p><strong>Summary:</strong> ${escapeHtml(tailored.professional_summary)}</p>` : ""}
+          ${tailored.skills && tailored.skills.length ? `<p style="margin-bottom:6px;"><strong>Skills to lead with:</strong></p>
+            <div class="skill-chips" style="margin-bottom:12px;">${tailored.skills.map(s => `<span class="chip">${escapeHtml(s)}</span>`).join("")}</div>` : ""}
+          ${tailored.experience_bullets && tailored.experience_bullets.length ? `
+            <p style="margin-bottom:6px;"><strong>Suggested bullets:</strong></p>
+            <ul>${tailored.experience_bullets.map(b => `<li>${escapeHtml(b)}</li>`).join("")}</ul>` : ""}
+        </div>
+      </div>` : ""}
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-small" id="closeAnalysis">Close</button>
+      </div>
+    `;
+    overlay.querySelector("#closeAnalysis").addEventListener("click", () => overlay.remove());
+  } catch (err) {
+    body.innerHTML = `
+      <div class="form-error">${escapeHtml(err.message)}</div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-small" id="retryAnalysis">Retry</button>
+      </div>
+    `;
+    overlay.querySelector("#retryAnalysis").addEventListener("click", () => runAnalysis(app, overlay));
+  }
+}
+
+/* ---------------- Resume modal ---------------- */
+function openResumeModal() {
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:460px;">
+      <div class="modal-head">
+        <h3>Resume</h3>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <p style="font-size:13.5px; color:var(--text-muted); line-height:1.6; margin-top:0;">
+        Upload a PDF resume. This is the document used for AI matching against job descriptions.
+      </p>
+      <div class="resume-box">
+        <span id="resumeStatus">No file selected.</span>
+        <label class="btn btn-ghost btn-small" style="cursor:pointer;">
+          Choose PDF
+          <input type="file" id="resumeFile" accept="application/pdf" style="display:none;">
+        </label>
+      </div>
+      <div id="resumeMsg" style="margin-top:14px;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-small" id="cancelResume">Close</button>
+        <button class="btn btn-primary btn-small" id="uploadResumeBtn" disabled>Upload</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  document.getElementById("closeModal").addEventListener("click", close);
+  document.getElementById("cancelResume").addEventListener("click", close);
+
+  let selectedFile = null;
+  document.getElementById("resumeFile").addEventListener("change", (e) => {
+    selectedFile = e.target.files[0] || null;
+    document.getElementById("resumeStatus").textContent = selectedFile ? selectedFile.name : "No file selected.";
+    document.getElementById("uploadResumeBtn").disabled = !selectedFile;
+  });
+
+  document.getElementById("uploadResumeBtn").addEventListener("click", async () => {
+    if (!selectedFile) return;
+    const msgEl = document.getElementById("resumeMsg");
+    const btn = document.getElementById("uploadResumeBtn");
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span>`;
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    try {
+      const result = await api("/users/resume", { method: "POST", body: formData, isForm: true });
+      msgEl.innerHTML = `<div class="form-ok">Resume uploaded — ${result.characters_extracted || 0} characters extracted.</div>`;
+      toast("Resume uploaded.");
+      btn.textContent = "Upload";
+      btn.disabled = false;
+    } catch (err) {
+      msgEl.innerHTML = `<div class="form-error">${escapeHtml(err.message)}</div>`;
+      btn.textContent = "Upload";
+      btn.disabled = false;
+    }
+  });
+}
+
+/* ---------------- Password modal ---------------- */
+function openPasswordModal() {
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-head">
+        <h3>Change password</h3>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div id="pwMsg"></div>
+      <form id="pwForm">
+        <div class="field">
+          <label>Current password</label>
+          <input type="password" id="oldPw" required>
+        </div>
+        <div class="field">
+          <label>New password</label>
+          <input type="password" id="newPw" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost btn-small" id="cancelPw">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-small" id="savePw">Update password</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+  document.getElementById("closeModal").addEventListener("click", close);
+  document.getElementById("cancelPw").addEventListener("click", close);
+
+  document.getElementById("pwForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msgEl = document.getElementById("pwMsg");
+    const btn = document.getElementById("savePw");
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span>`;
+    try {
+      await api("/users", {
+        method: "PUT",
+        body: {
+          old_password: document.getElementById("oldPw").value,
+          new_password: document.getElementById("newPw").value,
+        },
+      });
+      msgEl.innerHTML = `<div class="form-ok">Password updated.</div>`;
+      toast("Password updated.");
+      setTimeout(close, 900);
+    } catch (err) {
+      msgEl.innerHTML = `<div class="form-error">${escapeHtml(err.message)}</div>`;
+      btn.disabled = false;
+      btn.textContent = "Update password";
+    }
+  });
+}
+
+/* ---------------- Utilities ---------------- */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+function escapeAttr(str) { return escapeHtml(str); }
+function formatDate(d) {
+  if (!d) return "";
+  const date = new Date(d + "T00:00:00");
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+function animateCount(el) {
+  const target = parseInt(el.getAttribute("data-target"), 10) || 0;
+  if (target === 0) { el.textContent = "0"; return; }
+  const duration = 600;
+  const start = performance.now();
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(eased * target);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ---------------- Boot ---------------- */
+(async function boot() {
+  if (state.token) {
+    try {
+      await loadApplications();
+      state.view = "dashboard";
+    } catch (err) {
+      state.token = null;
+      localStorage.removeItem("pathway_token");
+      state.view = "login";
+    }
+  }
+  render();
+})();
+</script>
+</body>
+</html>

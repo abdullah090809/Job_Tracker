@@ -1,8 +1,9 @@
 import json
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from app.cores.config import settings
 
-genai.configure(api_key=settings.GEMINI_API_KEY)
+client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 SYSTEM_PROMPT = """You are a resume analysis assistant. Compare the candidate's resume text against a job description and respond with ONLY valid JSON (no markdown, no preamble, no code fences) in exactly this shape:
 
@@ -19,10 +20,6 @@ SYSTEM_PROMPT = """You are a resume analysis assistant. Compare the candidate's 
 }
 """
 
-model = genai.GenerativeModel(
-    model_name="gemini-2.5-flash",
-    system_instruction=SYSTEM_PROMPT,
-)
 
 def analyze_resume_against_jd(resume_text: str, jd_text: str) -> dict:
     user_prompt = f"""RESUME:
@@ -32,9 +29,11 @@ JOB DESCRIPTION:
 {jd_text}
 """
 
-    response = model.generate_content(
-        user_prompt,
-        generation_config=genai.types.GenerationConfig(
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=user_prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
             temperature=0.3,
             response_mime_type="application/json",
         ),
