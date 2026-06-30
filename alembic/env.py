@@ -6,6 +6,7 @@ from alembic import context
 from app.cores.config import settings
 from app.models.user import User
 config = context.config
+from app.models.application import Application
 
 config.set_main_option("sqlalchemy.url", f"postgresql://{settings.DATABASE_USERNAME}:{settings.DATABASE_PASSWORD}@{settings.DATABASE_HOSTNAME}:{settings.DATABASE_PORT}/{settings.DATABASE_NAME}")
 

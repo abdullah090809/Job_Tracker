@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
-    GROQ_API_KEY: str
+    GEMINI_API_KEY: str
 
     model_config = {"env_file": str(env_path), "env_file_encoding": "utf-8"}
 

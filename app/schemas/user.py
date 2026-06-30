@@ -1,15 +1,20 @@
-from datetime import datetime
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
 
 
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+
 class UserOut(BaseModel):
     id: int
     email: EmailStr
     created_at: datetime
-    model_config = {
-        "from_attribute": True
-    }
+
+    model_config = {"from_attributes": True}
+
+
+class PasswordUpdate(BaseModel):
+    old_password: str
+    new_password: str
