@@ -70,4 +70,5 @@ jobs:
         run: |
           git config --global user.email "ci@github.com"
           git config --global user.name "GitHub Actions"
-          git push https://abdullah090809:$HF_TOKEN@huggingface.co/spaces/abdullah090809/Job_Tracker_API master:main --force
+          git remote add space https://abdullah090809:$HF_TOKEN@huggingface.co/spaces/abdullah090809/Job_Tracker_API || git remote set-url space https://abdullah090809:$HF_TOKEN@huggingface.co/spaces/abdullah090809/Job_Tracker_API
+          git push space master:main --force
