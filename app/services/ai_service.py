@@ -3,8 +3,6 @@ from google import genai
 from google.genai import types
 from app.cores.config import settings
 
-client = genai.Client(api_key=settings.GEMINI_API_KEY)
-
 SYSTEM_PROMPT = """You are a resume analysis assistant. Compare the candidate's resume text against a job description and respond with ONLY valid JSON (no markdown, no preamble, no code fences) in exactly this shape:
 
 {
@@ -22,6 +20,8 @@ SYSTEM_PROMPT = """You are a resume analysis assistant. Compare the candidate's 
 
 
 def analyze_resume_against_jd(resume_text: str, jd_text: str) -> dict:
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    
     user_prompt = f"""RESUME:
 {resume_text}
 
