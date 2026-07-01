@@ -47,8 +47,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install pytest
+        run: pip install pytest pytest-asyncio httpx
+
       - name: Run tests
-        run: pytest --disable-warnings -v
+        run: python -m pytest --disable-warnings -v
 
   deploy:
     runs-on: ubuntu-latest
