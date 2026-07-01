@@ -8,6 +8,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: Testing
 
     services:
       postgres:
@@ -56,6 +57,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: test
+    environment: Deploy
 
     steps:
       - name: Checkout code
