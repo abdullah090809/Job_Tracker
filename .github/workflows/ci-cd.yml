@@ -64,7 +64,11 @@ jobs:
           fetch-depth: 0
 
       - name: Push to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           git config --global user.email "ci@github.com"
           git config --global user.name "GitHub Actions"
-          git push https://abdullah090809:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/abdullah090809/Job_Tracker_API HEAD:main --force
+          git config --global credential.helper store
+          echo "https://abdullah090809:${HF_TOKEN}@huggingface.co" > ~/.git-credentials
+          git push https://huggingface.co/spaces/abdullah090809/Job_Tracker_API HEAD:main --force
