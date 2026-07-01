@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch: {}
 
 jobs:
   test:
@@ -55,105 +54,17 @@ jobs:
         run: python -m pytest --disable-warnings -v
 
   deploy:
-    # Only run deploy for pushes or manual dispatches in the main repository
-    if: github.repository == 'abdullah090809/Job_Tracker' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     needs: test
-
-    env:
-      SECRET_KEY: ${{ secrets.SECRET_KEY }} # if needed for scripts
-      HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          lfs: true
 
-      - name: Debug run context & check HF_TOKEN
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      - name: Push to Hugging Face
         run: |
-          echo "Run info:"
-          echo "  event: $GITHUB_EVENT_NAME"
-          echo "  repo: $GITHUB_REPOSITORY"
-          echo "  ref: $GITHUB_REF"
-          echo "  actor: $GITHUB_ACTOR"
-          echo "  head_ref: $GITHUB_HEAD_REF"  # non-empty for PRs from forks
-          # Safe check for secret presence (DO NOT print the secret)
-          if [ -z "$HF_TOKEN" ]; then
-            echo "ERROR: HF_TOKEN is not available in this run (empty)."
-            echo "  -> If this was a PR from a fork, GitHub will not expose secrets to that run."
-            exit 1
-          else
-            echo "HF_TOKEN is present."
-          fi
-
-      - name: Install huggingface_hub
-        run: pip install huggingface_hub
-
-      - name: Push to Hugging Face via huggingface_hub
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          python - <<'PY'
-          import os, sys, shutil
-          from huggingface_hub import Repository
-
-          token = os.getenv("HF_TOKEN")
-          if not token:
-              sys.exit("HF_TOKEN not set")
-
-          repo_url = "https://huggingface.co/spaces/abdullah090809/Job_Tracker_API"
-          local_dir = "hf_space_tmp"
-
-          # Clean up previous clone if present
-          if os.path.exists(local_dir):
-              shutil.rmtree(local_dir)
-
-          # Clone the Space repository
-          repo = Repository(local_dir=local_dir, clone_from=repo_url, use_auth_token=token)
-
-          # Copy workspace files into the cloned space (skip .git)
-          def copy_dir(src, dst):
-              for item in os.listdir(src):
-                  if item == ".git" or item == local_dir:
-                      continue
-                  s = os.path.join(src, item)
-                  d = os.path.join(dst, item)
-                  if os.path.isdir(s):
-                      if os.path.exists(d):
-                          shutil.rmtree(d)
-                      shutil.copytree(s, d)
-                  else:
-                      # ensure destination dir exists
-                      os.makedirs(os.path.dirname(d), exist_ok=True)
-                      shutil.copy2(s, d)
-
-          copy_dir(".", local_dir)
-
-          # Add, commit and push changes
-          repo.git_add(pattern=".")
-          try:
-              repo.git_commit("CI: update Space")
-          except Exception:
-              # If commit fails because nothing to commit, skip
-              print("No changes to commit or commit failed.")
-          repo.git_push(force=True)
-          PY
-
-      # Optional fallback (token-in-URL). Keep commented unless you explicitly want it.
-      # - name: Push to Hugging Face (fallback git token-in-URL)
-      #   env:
-      #     HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      #   run: |
-      #     if [ -z "$HF_TOKEN" ]; then
-      #       echo "HF_TOKEN not set; aborting push."
-      #       exit 1
-      #     fi
-      #     git config --global user.email "ci@github.com"
-      #     git config --global user.name "GitHub Actions"
-      #     git remote add space "https://abdullah090809:${HF_TOKEN}@huggingface.co/spaces/abdullah090809/Job_Tracker_API.git" || \
-      #       git remote set-url space "https://abdullah090809:${HF_TOKEN}@huggingface.co/spaces/abdullah090809/Job_Tracker_API.git"
-      #     git push space master:main --force
+          git config --global user.email "ci@github.com"
+          git config --global user.name "GitHub Actions"
+          git push https://abdullah090809:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/abdullah090809/Job_Tracker_API HEAD:main --force
